@@ -1,0 +1,34 @@
+{
+  "name": "karma-perfecto-launcher",
+  "version": "1.0.0",
+  "description": "Perfecto plugin for Karma",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PerfectoCode/karma-perfecto-launcher.git"
+  },
+  "keywords": [
+    "karma",
+    "perfecto",
+    "perfectomobile",
+    "digital",
+    "quality",
+    "reporting"
+  ],
+  "author": "Morris Horesh",
+  "license": "SEE LICENSE IN <LICENSE.txt>",
+  "bugs": {
+    "url": "https://github.com/PerfectoCode/karma-perfecto-launcher/issues"
+  },
+  "homepage": "https://github.com/PerfectoCode/karma-perfecto-launcher#readme",
+
+  "devDependencies": {
+	
+    "selenium-webdriver": "^4.0.0-alpha.1",
+    "perfecto-reporting": "^2.5.2"
+  },
+
+}
