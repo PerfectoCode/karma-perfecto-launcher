@@ -56,7 +56,7 @@ const customLaunchers = {
 
 		// The Perfecto Cloud URL
 		// MANDATORY
-		perfectoUrl: 's',
+		perfectoUrl: '',
 
 		// The security token
 		// MANDATORY
