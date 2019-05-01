@@ -1,6 +1,6 @@
-#Perfecto karma plugin
+# Perfecto karma plugin
 
-#Installation
+# Installation
 npm install karma-perfecto-launcher
 
 # Usage
