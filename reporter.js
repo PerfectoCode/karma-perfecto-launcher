@@ -71,8 +71,6 @@ function setupReportingClient(id){
 
 function finish(id){
 
-	logMap.delete(id);
-
 	if (getDriverData(id).reporterShouldQuit)
 		return quitDriver(id);
 
@@ -135,6 +133,10 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 			p = finish(id);
 			if (p)
 				await p;
+		}
+
+		for (var [id, logData] of logMap.entries()){
+			logMap.delete(id);
 		}
 
 	}
