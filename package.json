@@ -1,6 +1,6 @@
 {
   "name": "karma-perfecto-launcher",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Perfecto plugin for Karma",
   "main": "index.js",
   "scripts": {
