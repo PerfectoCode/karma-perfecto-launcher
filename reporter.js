@@ -110,11 +110,12 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 			log.info('Starting test log for %s', id);
 
 			// trust me, this might happen if we didn't close a previous driver properly			
-			try{
-				await reportingClient.testStart(testName + ':' + id, new reporting.Perfecto.PerfectoTestContext());
-			}catch (error){
+			if (!reportingClient){
 				log.warn('invalid id');
+				continue;
 			}
+
+			await reportingClient.testStart(testName + ':' + id, new reporting.Perfecto.PerfectoTestContext());
 
 			for (var i = 0; i < browserLog.entries.length; i++){
 				entry = browserLog.entries[i];
