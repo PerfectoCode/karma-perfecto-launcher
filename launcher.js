@@ -126,7 +126,9 @@ function getTunnelId(perfectoConfig, securityToken, perfectoUrl){
 
 	perfectoDisconnect = true;
 
-	return stdout.trim();
+	out = stdout.trim();
+	words = out.split(' ');
+	return words[words.length - 1];
 }
 
 function closeTunnel(){

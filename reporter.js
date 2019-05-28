@@ -45,6 +45,9 @@ function getLogData(id){
 
 function addResult(id, result, status){
 
+	if (!testName)
+		testName = result.fullNmae;
+
 	logData = getLogData(id);
 
 	if (!logData.browserLog){
@@ -86,10 +89,6 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 	if (config.perfecto && config.perfecto.testName)
 		testName = config.perfecto.testName;
 
-	if (!testName)
-		testName = 'Unknown';
-
-
 	baseReporterDecorator(this);
 
 	this.onBrowserStart = function (browser){
@@ -99,41 +98,52 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 	async function complete(){
 
+		actualTestName = testName ? testName : 'Unknown';
+
 		for (var [id, logData] of logMap.entries()){
 			
-			var browserLog = logData.browserLog;
-			
-			var reportingClient = logData.reportingClient;
+			try {
+				var browserLog = logData.browserLog;
+				
+				var reportingClient = logData.reportingClient;
 
-			log.info('Starting test log for %s', id);
+				log.info('Starting test log for %s', id);
 
-			// trust me, this might happen if we didn't close a previous driver properly			
-			if (!reportingClient){
-				log.warn('invalid id');
-				continue;
+				// trust me, this might happen if we didn't close a previous driver properly			
+				if (!reportingClient){
+					log.warn('invalid id');
+					continue;
+				}
+
+				await reportingClient.testStart(actualTestName + ':' + id, new reporting.Perfecto.PerfectoTestContext());
+
+				if (browserLog && browserLog.entries) {			
+					for (var i = 0; i < browserLog.entries.length; i++){
+						entry = browserLog.entries[i];
+						log.info('%s:%s: [%s] [%s]',id, entry.status ? 'Passed' : 'Failed', entry.result.suite.join(' '), entry.result.description);
+						await reportingClient.stepStart(entry.result.suite.join(' ') + ' - ' + entry.result.description);
+						await reportingClient.reportiumAssert(entry.result.description, entry.status);
+						await reportingClient.stepEnd();
+
+					}
+				}
+
+				log.info('%s:test end %s', id, logData.success ? 'passes' : 'failed');
+
+				if (logData.success)
+					await reportingClient.testStop({status: reporting.passed});
+				else
+					await reportingClient.testStop({status: reporting.failed});
+
+				p = finish(id);
+				if (p)
+					await p;
+			}catch(error) {
+				// we do not want to pass the exception to the calling procedure
+				// which may cause an endless loop but rather skip to the next item
+				log.error(error);
 			}
 
-			await reportingClient.testStart(testName + ':' + id, new reporting.Perfecto.PerfectoTestContext());
-
-			for (var i = 0; i < browserLog.entries.length; i++){
-				entry = browserLog.entries[i];
-				log.info('%s:%s: [%s] [%s]',id, entry.status ? 'Passed' : 'Failed', entry.result.suite.join(' '), entry.result.description);
-				await reportingClient.stepStart(entry.result.suite.join(' ') + ' - ' + entry.result.description);
-				await reportingClient.reportiumAssert(entry.result.description, entry.status);
-				await reportingClient.stepEnd();
-
-			}
-
-			log.info('%s:test end %s', id, logData.success ? 'passes' : 'failed');
-
-			if (logData.success)
-				await reportingClient.testStop({status: reporting.passed});
-			else
-				await reportingClient.testStop({status: reporting.failed});
-
-			p = finish(id);
-			if (p)
-				await p;
 		}
 
 		for (var [id, logData] of logMap.entries()){
