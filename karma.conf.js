@@ -72,7 +72,7 @@ const customLaunchers = {
 		jobName: '',
 
 		// the job number.
-		// the environment variable PERFECTO_JOB_NUMBERs can be used instead.
+		// the environment variable PERFECTO_JOB_NUMBER can be used instead.
 		// OPTIONAL
 		jobNumber: '',
 
