@@ -3,6 +3,10 @@ var getDriverData = require('./launcher.js').getDriverData;
 var quitDriver = require('./launcher.js').quitDriver;
 var log;
 
+var jobName = null;
+var jobNumber = null;
+
+
 class Entry {
 	constructor(result, status){
 		this.result = result;
@@ -26,48 +30,13 @@ class LogData{
 
 var logMap = new Map();
 
-function getLogData(id){
-	logData = logMap.get(id);
-	
-	if (logData)
-		return logData;
-
-	logData = new LogData();
-
-	logMap.set(id, logData);
-
-	return logData;
-}
-
-
-
-function addResult(id, result, status){
-
-	logData = getLogData(id);
-
-	if (!logData.browserLog){
-		logData.browserLog = new BrowserLog();
-	}
-
-	logData.browserLog.entries.push(new Entry (result, status));
-}
-
-function setupReportingClient(id, config){
+function setupReportingClient(id, logData){
 
 	log.info('initializing reporter for %s', id);
 
 	const webDriver = getDriverData(id).driver;
 
 	var jobDetailMap = {};
-
-	var jobName = process.env.PERFECTO_JOB_NAME;
-	var jobNumber = process.env.PERFECTO_JOB_NUMBER;
-
-	if (!jobName && (config.perfecto && config.perfecto.jobName))
-		jobName = config.perfecto.jobName;
-
-	if (!jobNumber && (config.perfecto && config.perfecto.jobNumber))
-		jobNumber = config.perfecto.jobNumber
 
 	if(jobName){
 		jobDetailMap.jobName = jobName;
@@ -89,15 +58,51 @@ function setupReportingClient(id, config){
 		job: jobDetails
 	});
 
-	getLogData(id).reportingClient = new reporting.Perfecto.PerfectoReportingClient(perfectoExecutionContext);
-
-	getDriverData(id).quit = false;
+	logData.reportingClient = new reporting.Perfecto.PerfectoReportingClient(perfectoExecutionContext);
 }
 
 
-function finish(id){
+function getLogData(id){
+	logData = logMap.get(id);
+	
+	if (logData)
+		return logData;
 
-	if (getDriverData(id).reporterShouldQuit)
+	logData = new LogData();
+
+	logMap.set(id, logData);
+
+	setupReportingClient(id, logData);
+
+	return logData;
+}
+
+function setupJobInfo(config){
+	jobName = process.env.PERFECTO_JOB_NAME;
+	jobNumber = process.env.PERFECTO_JOB_NUMBER;
+
+	if (config.perfecto && config.perfecto.jobName)
+		jobName = config.perfecto.jobName;
+
+	if (config.perfecto && config.perfecto.jobNumber)
+		jobNumber = config.perfecto.jobNumber
+}
+
+function addResult(id, result, status){
+
+	logData = getLogData(id);
+
+	if (!logData.browserLog){
+		logData.browserLog = new BrowserLog();
+	}
+
+	logData.browserLog.entries.push(new Entry (result, status));
+}
+
+
+function finish(id, config){
+
+	if (config.singleRun)
 		return quitDriver(id);
 
 	log.info("Not quitting driver");
@@ -111,10 +116,7 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 	baseReporterDecorator(this);
 
-	this.onBrowserStart = function (browser){
-		setupReportingClient(browser.id, config);
-	}
-
+	setupJobInfo(config);
 
 	async function complete(){
 
@@ -138,7 +140,7 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 				// trust me, this might happen if we didn't close a previous driver properly			
 				if (!reportingClient){
-					log.warn('invalid id');
+					log.warn('invalid id %s', id);
 					continue;
 				}
 
@@ -184,7 +186,7 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 					}
 
-	            			p = finish(id);
+	            			p = finish(id, config);
 					if (p)
 						await p;
 

@@ -11,8 +11,6 @@ var log;
 class DriverData{
 	constructor(){
 		this.driver = null;
-		this.quit = true;
-		this.reporterShouldQuit = false;
 	}
 };
 
@@ -33,6 +31,20 @@ function getDriverData(id){
 }
 
 module.exports.getDriverData = getDriverData;
+
+function haveReporter(config) {
+
+	reporters = config.reporters;
+	if (!reporters)
+		return false;
+
+	for (var i=0; i<reporters.length; i++){
+		if (reporters[i] == 'Perfecto')
+			return true;
+	}
+
+	return false;
+}
 
 function getIPAddress() {
 
@@ -208,8 +220,6 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 	else
 		tunnelIdCap={'tunnelId' : tunnelId};
 
-
-
 	var securityTokenCap = {
 		'securityToken' : securityToken,
 	}
@@ -245,18 +255,18 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 	};
 
 	this.on('kill', function(done) {
-		// If there is no reporter or we are at multiple runs, then we quit ourselves
-		if (getDriverData(this.id).quit || !config.singleRun){
-			quitDriver(this.id).then(function(){done()});
-		}else{
+
+		if (haveReporter(config)){
 			// There is a reporter runnung. We should mark this driver so it will
 			// quit when it is finished.
-			getDriverData(this.id).reporterShouldQuit = true;
 			log.info('Reporter registered. Not quitting driver %s', this.id);
 			done();
-		}
 
-		
+		}else{
+			if (!config.singleRun){
+				quitDriver(this.id).then(function(){done()});
+			}
+		}
 	});
 }
 
