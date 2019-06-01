@@ -52,7 +52,7 @@ function addResult(id, result, status){
 	logData.browserLog.entries.push(new Entry (result, status));
 }
 
-unction setupReportingClient(id, config){
+function setupReportingClient(id, config){
 
 	log.info('initializing reporter for %s', id);
 
@@ -158,9 +158,9 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 						log.info('%s:test end %s', id, logData.success ? 'passes' : 'failed');
 
 						if (logData.success)
-							await reportingClient.testStop({status: reporting.passed});
+							await reportingClient.testStop({status: reporting.Constants.results.passed});
 						else
-							await reportingClient.testStop({status: reporting.failed});
+							await reportingClient.testStop({status: reporting.Constants.results.failed});
 					} else {
 						for (var i = 0; i < browserLog.entries.length; i++){
 							entry = browserLog.entries[i];
