@@ -132,11 +132,11 @@ function getTunnelId(perfectoConfig, securityToken, perfectoUrl){
 		return null;
 	}
 
+	perfectoDisconnect = true;
+
 	process.on('exit', (code) => {
 		closeTunnel();
 	});
-
-	perfectoDisconnect = true;
 
 	out = stdout.trim();
 	words = out.split(' ');
@@ -255,18 +255,19 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 	};
 
 	this.on('kill', function(done) {
+		// If we are not running in single run mode, we always close here.
+		// If we do not have a reporter, we always close here.
+		if (!haveReporter(config) || !config.singleRun){
+			// There is a reporter runnung.The reporter will close it.
+			quitDriver(this.id).then(function(){done()});
 
-		if (haveReporter(config)){
-			// There is a reporter runnung. We should mark this driver so it will
-			// quit when it is finished.
-			log.info('Reporter registered. Not quitting driver %s', this.id);
-			done();
 
 		}else{
-			if (!config.singleRun){
-				quitDriver(this.id).then(function(){done()});
-			}
+			// We have a reporter and we are in single run mode. The reporter will do the closing.
+			log.info('Reporter registered. Not quitting driver %s', this.id);
+			done();
 		}
 	});
+
 }
 

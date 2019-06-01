@@ -157,7 +157,7 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 						}
 
-						log.info('%s:test end %s', id, logData.success ? 'passes' : 'failed');
+						log.info('%s:test end %s', id, logData.success ? 'passed' : 'failed');
 
 						if (logData.success)
 							await reportingClient.testStop({status: reporting.Constants.results.passed});
