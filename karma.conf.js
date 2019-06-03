@@ -66,6 +66,21 @@ const customLaunchers = {
 		// OPTIONAL
 		testName: '',
 
+		// The job name.
+		// The environment variable PERFECTO_JOB_NAME can be used instead.
+		// OPTIONAL
+		jobName: '',
+
+		// The job number.
+		// The environment variable PERFECTO_JOB_NUMBER can be used instead.
+		// OPTIONAL
+		jobNumber: '',
+
+
+		// Enable/disable test per spec. If not set the false is assumed.
+		// OPTIONAL
+		testPerSpec: false,
+
 		// Place holder for capablities that apply for all browser
 		// OPTIONAL
 		capabilities: {

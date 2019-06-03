@@ -1,6 +1,6 @@
 {
   "name": "karma-perfecto-launcher",
-  "version": "1.0.10",
+  "version": "1.0.15",
   "description": "Perfecto plugin for Karma",
   "main": "index.js",
   "scripts": {
@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/PerfectoCode/karma-perfecto-launcher#readme",
   "dependencies": {
+    "karma": "^4.1.0",
     "perfecto-reporting": ">=2.5.2",
     "selenium-webdriver": ">=4.0.0-alpha.1"
   }

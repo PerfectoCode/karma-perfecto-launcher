@@ -11,8 +11,6 @@ var log;
 class DriverData{
 	constructor(){
 		this.driver = null;
-		this.quit = true;
-		this.reporterShouldQuit = false;
 	}
 };
 
@@ -33,6 +31,20 @@ function getDriverData(id){
 }
 
 module.exports.getDriverData = getDriverData;
+
+function haveReporter(config) {
+
+	reporters = config.reporters;
+	if (!reporters)
+		return false;
+
+	for (var i=0; i<reporters.length; i++){
+		if (reporters[i] == 'Perfecto')
+			return true;
+	}
+
+	return false;
+}
 
 function getIPAddress() {
 
@@ -120,13 +132,15 @@ function getTunnelId(perfectoConfig, securityToken, perfectoUrl){
 		return null;
 	}
 
+	perfectoDisconnect = true;
+
 	process.on('exit', (code) => {
 		closeTunnel();
 	});
 
-	perfectoDisconnect = true;
-
-	return stdout.trim();
+	out = stdout.trim();
+	words = out.split(' ');
+	return words[words.length - 1];
 }
 
 function closeTunnel(){
@@ -206,8 +220,6 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 	else
 		tunnelIdCap={'tunnelId' : tunnelId};
 
-
-
 	var securityTokenCap = {
 		'securityToken' : securityToken,
 	}
@@ -243,18 +255,19 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 	};
 
 	this.on('kill', function(done) {
-		// If there is no reporter or we are at multiple runs, then we quit ourselves
-		if (getDriverData(this.id).quit || !config.singleRun){
+		// If we are not running in single run mode, we always close here.
+		// If we do not have a reporter, we always close here.
+		if (!haveReporter(config) || !config.singleRun){
+			// There is a reporter runnung.The reporter will close it.
 			quitDriver(this.id).then(function(){done()});
+
+
 		}else{
-			// There is a reporter runnung. We should mark this driver so it will
-			// quit when it is finished.
-			getDriverData(this.id).reporterShouldQuit = true;
+			// We have a reporter and we are in single run mode. The reporter will do the closing.
 			log.info('Reporter registered. Not quitting driver %s', this.id);
 			done();
 		}
-
-		
 	});
+
 }
 
