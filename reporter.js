@@ -32,7 +32,7 @@ var logMap = new Map();
 
 function setupReportingClient(id, logData){
 
-	log.info('initializing reporter for %s', id);
+	log.info('Initializing reporter for %s', id);
 
 	const webDriver = getDriverData(id).driver;
 
@@ -110,6 +110,49 @@ function finish(id, config){
 	return null;
 }
 
+async function reportTest(browserLog, id, config, reportingClient){
+	await reportingClient.testStart(testName + ':' + id, new reporting.Perfecto.PerfectoTestContext());
+
+	for (var i = 0; i < browserLog.entries.length; i++){
+		entry = browserLog.entries[i];
+		log.info('%s:%s: [%s] [%s]',id, entry.status ? 'Passed' : 'Failed', entry.result.suite.join(' '), entry.result.description);
+		await reportingClient.stepStart(entry.result.suite.join(' ') + ' - ' + entry.result.description);
+		await reportingClient.reportiumAssert(entry.result.description, entry.status);
+		await reportingClient.stepEnd();
+	}
+
+	log.info('%s:test end %s', id, logData.success ? 'passed' : 'failed');
+
+	if (logData.success)
+		await reportingClient.testStop({status: reporting.Constants.results.passed});
+	else
+		await reportingClient.testStop({status: reporting.Constants.results.failed});
+}
+
+async function reportSpecs(browserLog, id, config, reportingClient) {
+
+	for (var i = 0; i < browserLog.entries.length; i++){
+		entry = browserLog.entries[i];
+		result = entry.result;
+
+		log.info(`Starting test - ${result.fullName}`);
+
+		await reportingClient.testStart(result.fullName, new reporting.Perfecto.PerfectoTestContext());
+
+		if(result.success){
+			await reportingClient.testStop({
+	      			status: reporting.Constants.results.passed
+	    		});
+		}else{
+			const failure = result.log.length > 0 ? result.log[result.log.length - 1] : "No Error Message provided!";
+	    		var failedOptions = {
+	      			status: reporting.Constants.results.failed,message: failure
+	    		};
+			await reportingClient.testStop(failedOptions);
+		}
+	}
+}
+
 module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorator, logger, config){
 
 	log = logger.create('perfecto-reporter');
@@ -129,6 +172,9 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 		testName = config.perfecto.testName ? config.perfecto.testName : 'Unknown';
 
+		var pending = [];
+
+
 		for (var [id, logData] of logMap.entries()){
 			
 			try {
@@ -140,58 +186,16 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 				// trust me, this might happen if we didn't close a previous driver properly			
 				if (!reportingClient){
-					log.warn('invalid id %s', id);
+					log.warn('Invalid id %s', id);
 					continue;
 				}
 
 				if (browserLog && browserLog.entries) {			
-					if (!testPerSpec){				
-						await reportingClient.testStart(testName + ':' + id, new reporting.Perfecto.PerfectoTestContext());
-
-						for (var i = 0; i < browserLog.entries.length; i++){
-							entry = browserLog.entries[i];
-							log.info('%s:%s: [%s] [%s]',id, entry.status ? 'Passed' : 'Failed', entry.result.suite.join(' '), entry.result.description);
-							await reportingClient.stepStart(entry.result.suite.join(' ') + ' - ' + entry.result.description);
-							await reportingClient.reportiumAssert(entry.result.description, entry.status);
-							await reportingClient.stepEnd();
-
-						}
-
-						log.info('%s:test end %s', id, logData.success ? 'passed' : 'failed');
-
-						if (logData.success)
-							await reportingClient.testStop({status: reporting.Constants.results.passed});
-						else
-							await reportingClient.testStop({status: reporting.Constants.results.failed});
+					if (!testPerSpec){
+						pending.push (reportTest(browserLog, id, config, reportingClient));
 					} else {
-						for (var i = 0; i < browserLog.entries.length; i++){
-							entry = browserLog.entries[i];
-							result = entry.result;
-							log.info(`Starting test - ${result.fullName}`);
-
-							await reportingClient.testStart(result.fullName, new reporting.Perfecto.PerfectoTestContext());
-
-							if(result.success){
-								await reportingClient.testStop({
-						      			status: reporting.Constants.results.passed
-						    		});
-							}else{
-								const failure = result.log.length > 0 ? result.log[result.log.length - 1] : "No Error Message provided!";
-						    		var failedOptions = {
-						      			status: reporting.Constants.results.failed,message: failure
-						    		};
-								await reportingClient.testStop(failedOptions);
-							}
-						}
-
+						pending.push (reportSpecs(browserLog, id, config, reportingClient));
 					}
-
-	            			p = finish(id, config);
-					if (p)
-						await p;
-
-
-
 				}
 			}catch(error) {
 				// we do not want to pass the exception to the calling procedure
@@ -201,10 +205,21 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 		}
 
+		await Promise.all(pending);
+
+		pending = [];
+
 		for (var [id, logData] of logMap.entries()){
+			p = finish(id, config);
+			if (p)
+				pending.push(p);
+
 			logMap.delete(id);
 		}
 
+		await Promise.all(pending);
+
+		log.info('Drivers terminated');
 	}
 
 	var pending = [];

@@ -157,7 +157,7 @@ function closeTunnel(){
 }
 
 function quitDriver(id) {
-	log.info ('terminating driver %s', id);
+	log.info ('Terminating driver %s', id);
 	try {
 		var driver = getDriverData(id).driver;
 		driverDataMap.delete(id);
