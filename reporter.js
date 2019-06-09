@@ -100,16 +100,6 @@ function addResult(id, result, status){
 }
 
 
-function finish(id, config){
-
-	if (config.singleRun)
-		return quitDriver(id);
-
-	log.info("Not quitting driver");
-
-	return null;
-}
-
 async function reportTest(browserLog, id, config, reportingClient){
 	await reportingClient.testStart(testName + ':' + id, new reporting.Perfecto.PerfectoTestContext());
 
@@ -127,6 +117,10 @@ async function reportTest(browserLog, id, config, reportingClient){
 		await reportingClient.testStop({status: reporting.Constants.results.passed});
 	else
 		await reportingClient.testStop({status: reporting.Constants.results.failed});
+
+	if (config.singleRun)
+		await quitDriver(id);
+
 }
 
 async function reportSpecs(browserLog, id, config, reportingClient) {
@@ -151,6 +145,10 @@ async function reportSpecs(browserLog, id, config, reportingClient) {
 			await reportingClient.testStop(failedOptions);
 		}
 	}
+
+	if (config.singleRun)
+		await quitDriver(id);
+
 }
 
 module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorator, logger, config){
@@ -207,19 +205,6 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 
 		await Promise.all(pending);
 
-		pending = [];
-
-		for (var [id, logData] of logMap.entries()){
-			p = finish(id, config);
-			if (p)
-				pending.push(p);
-
-			logMap.delete(id);
-		}
-
-		await Promise.all(pending);
-
-		log.info('Drivers terminated');
 	}
 
 	var pending = [];
