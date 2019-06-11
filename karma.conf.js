@@ -81,6 +81,11 @@ const customLaunchers = {
 		// OPTIONAL
 		testPerSpec: false,
 
+		// Timeout in msec between keep alives. Only required for long tests
+		// where browsers may remain idel for a long period of time
+		// OPTIONAL
+		keepAlive: 0,
+
 		// Place holder for capablities that apply for all browser
 		// OPTIONAL
 		capabilities: {

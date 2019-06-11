@@ -62,6 +62,26 @@ function getIPAddress() {
     return null;
 }
 
+function keepAlive(){
+	log.info('sending keep alive');
+	for (var [id, driverData] of driverDataMap.entries()) {
+		driverData.driver.getCurrentUrl();
+	}
+}
+
+function setupKeepAlive(perfectoConfig) {
+	if (!perfectoConfig.keepAlive)
+		return;
+
+	if (perfectoConfig.keepAlive <= 0)
+		return;
+
+	log.info('setting keep alive timeout to %d', perfectoConfig.keepAlive);
+
+	setInterval(keepAlive, perfectoConfig.keepAlive);
+
+}
+
 function getHost(perfectoConfig){
 	if (!perfectoConfig.host)
 		return getIPAddress();
@@ -233,6 +253,8 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 
 	baseBrowserDecorator(this);
 
+	setupKeepAlive(perfectoConfig);
+
 	this._start = function (karmaUrl) {
 
 		try{
@@ -246,8 +268,7 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 				.usingServer(perfectoUrl)
 				.build();
 
-			getDriverData(this.id).driver = driver;
-			driver.get(karmaUrl);
+			driver.get(karmaUrl).then(getDriverData(this.id).driver = driver);
 
 		}catch (e) {
 			log.error(e);
