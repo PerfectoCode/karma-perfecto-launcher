@@ -190,7 +190,9 @@ function quitDriver(id) {
 
 module.exports.quitDriver = quitDriver;
 
-module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, logger, config, args) {
+module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator, logger, config, args) {
+
+	baseLauncherDecorator(this);
 
 	log = logger.create('perfecto-launcher');
 
@@ -198,28 +200,34 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 	perfectoConfig = config.perfecto;
 	if (!perfectoConfig){
 		log.error('Missing perfecto configuration section');
-		return null;
+		this._done('failure');
+		return;
 	}
 
 	// host	
 	const host = getHost(perfectoConfig);
 	if (host == null){
 		log.error('Cannot determine local host');
-		return null;
+		this._done('failure');
+		return;
 	}
 	log.info('Using host [%s]', host);
 
 	// perfecto server url	
 	const perfectoUrl = getPerfectoUrl(perfectoConfig);
-	if (perfectoUrl == null)
-		return null;
+	if (perfectoUrl == null){
+		this._done('failure');
+		return;
+	}
 
 	log.info('Using perfectoUrl [%s]', perfectoUrl);
 
 	// security token	
 	const securityToken = getSecurityToken(perfectoConfig);
-	if (securityToken == null)
-		return null;
+	if (securityToken == null){
+		this._done('failure');
+		return;
+	}
 
 	log.info('Using securityToken [%s]', securityToken);
 
@@ -227,8 +235,10 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 	if (tunnelId == null)
 		tunnelId = getTunnelId(perfectoConfig, securityToken, perfectoUrl);
 
-	if (tunnelId == null)
-		return null;
+	if (tunnelId == null){
+		this._done('failure');
+		return;
+	}
 	
 	log.info('Using tunnelId [%s]', tunnelId);
 	
@@ -251,11 +261,9 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 
 	log.info(capabilities);
 
-	baseBrowserDecorator(this);
-
 	setupKeepAlive(perfectoConfig);
 
-	this._start = function (karmaUrl) {
+	this.on('start', function(karmaUrl) {
 
 		try{
 			var parsed = url.parse(karmaUrl, true);
@@ -273,7 +281,7 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseBrowserDecorator, 
 		}catch (e) {
 			log.error(e);
 		}
-	};
+	});
 
 	this.on('kill', function(done) {
 		// If we are not running in single run mode, we always close here.
