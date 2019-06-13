@@ -7,6 +7,7 @@ const child_process = require('child_process');
 var perfectoConnect;
 var perfectoDisconnect = false;
 var log;
+var initError = false;
 
 class DriverData{
 	constructor(){
@@ -196,11 +197,22 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 
 	log = logger.create('perfecto-launcher');
 
+	function error(self) {
+		initError = true;
+		self._done('failure');
+	}
+
+	if (initError){
+		log.error('Exiting because of previous errors');
+		error(this);
+		return;
+	}
+
 	// perfecto main configuration	
 	perfectoConfig = config.perfecto;
 	if (!perfectoConfig){
 		log.error('Missing perfecto configuration section');
-		this._done('failure');
+		error(this);
 		return;
 	}
 
@@ -208,7 +220,7 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 	const host = getHost(perfectoConfig);
 	if (host == null){
 		log.error('Cannot determine local host');
-		this._done('failure');
+		error(this);
 		return;
 	}
 	log.info('Using host [%s]', host);
@@ -216,7 +228,7 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 	// perfecto server url	
 	const perfectoUrl = getPerfectoUrl(perfectoConfig);
 	if (perfectoUrl == null){
-		this._done('failure');
+		error(this);
 		return;
 	}
 
@@ -225,7 +237,7 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 	// security token	
 	const securityToken = getSecurityToken(perfectoConfig);
 	if (securityToken == null){
-		this._done('failure');
+		error(this);
 		return;
 	}
 
@@ -236,7 +248,7 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 		tunnelId = getTunnelId(perfectoConfig, securityToken, perfectoUrl);
 
 	if (tunnelId == null){
-		this._done('failure');
+		error(this);
 		return;
 	}
 	
