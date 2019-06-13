@@ -143,12 +143,12 @@ function getTunnelId(perfectoConfig, securityToken, perfectoUrl){
 	try{	
 		stdout = child_process.execSync(cmd).toString();
 	} catch (e) {
-		log.error('Error staring tunnel');
+		log.error('Error staring tunnel:' + e);
 		return null;
 	}
 
 	if (!stdout){
-		log.error('Error starting tunnel. %s', stdout)
+		log.error('Error starting tunnel.');
 		return null;
 	}
 
