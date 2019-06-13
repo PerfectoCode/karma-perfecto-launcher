@@ -105,6 +105,10 @@ async function reportTest(browserLog, id, config, reportingClient){
 
 	for (var i = 0; i < browserLog.entries.length; i++){
 		entry = browserLog.entries[i];
+
+		if (config.perfecto.compactReport && entry.status)
+			continue;
+
 		log.info('%s:%s: [%s] [%s]',id, entry.status ? 'Passed' : 'Failed', entry.result.suite.join(' '), entry.result.description);
 		await reportingClient.stepStart(entry.result.suite.join(' ') + ' - ' + entry.result.description);
 		await reportingClient.reportiumAssert(entry.result.description, entry.status);

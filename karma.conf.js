@@ -77,9 +77,15 @@ const customLaunchers = {
 		jobNumber: '',
 
 
-		// Enable/disable test per spec. If not set the false is assumed.
+		// Enable/disable test per spec. If not set then false is assumed.
 		// OPTIONAL
 		testPerSpec: false,
+
+		// Enable/disable compact logging where only failures are reported
+		// If not set then false is assumed. This parameter is ignores when
+		// testPerSpec = true.
+		// OPTIONAL
+		compactReport: false,
 
 		// Timeout in msec between keep alives. Only required for long tests
 		// where browsers may remain idel for a long period of time
