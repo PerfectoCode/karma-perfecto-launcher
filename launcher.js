@@ -98,6 +98,9 @@ function setupKeepAlive(perfectoConfig) {
 
 	keepAliveTimer = setInterval(keepAlive, perfectoConfig.keepAlive);
 
+	// make sure the keep alive timer does not prevent us from exiting.	
+	keepAliveTimer.unref();
+
 	if (!perfectoConfig.keepAliveDuration)
 		return;
 
@@ -106,7 +109,8 @@ function setupKeepAlive(perfectoConfig) {
 
 	log.info('Setting keep alive duration to %d', perfectoConfig.keepAliveDuration);
 	
-	setTimeout(cancelKeepAlive, perfectoConfig.keepAliveDuration);
+	// make sure the keep alive cancel timeout does not prevent us from exiting.	
+	setTimeout(cancelKeepAlive, perfectoConfig.keepAliveDuration).unref();
 
 }
 
