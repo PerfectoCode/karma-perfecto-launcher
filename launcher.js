@@ -9,6 +9,8 @@ var perfectoDisconnect = false;
 var log;
 var initError = false;
 
+var keepAliveTimer = null;
+
 class DriverData{
 	constructor(){
 		this.driver = null;
@@ -63,23 +65,48 @@ function getIPAddress() {
     return null;
 }
 
-function keepAlive(){
-	log.info('sending keep alive');
+function keepAlive() {
+	log.info('Sending keep alive');
 	for (var [id, driverData] of driverDataMap.entries()) {
 		driverData.driver.getCurrentUrl();
 	}
 }
 
+function cancelKeepAlive() {
+
+	if (!keepAliveTimer)
+		return;
+
+	log.info('Canceling keep alive');
+
+	clearInterval(keepAliveTimer);
+	keepAliveTimer = null;
+}
+
 function setupKeepAlive(perfectoConfig) {
+
+	if (keepAliveTimer)
+		return;
+
 	if (!perfectoConfig.keepAlive)
 		return;
 
 	if (perfectoConfig.keepAlive <= 0)
 		return;
 
-	log.info('setting keep alive timeout to %d', perfectoConfig.keepAlive);
+	log.info('Setting keep alive timeout to %d', perfectoConfig.keepAlive);
 
-	setInterval(keepAlive, perfectoConfig.keepAlive);
+	keepAliveTimer = setInterval(keepAlive, perfectoConfig.keepAlive);
+
+	if (!perfectoConfig.keepAliveDuration)
+		return;
+
+	if (perfectoConfig.keepAliveDuration <= 0)
+		return;
+
+	log.info('Setting keep alive duration to %d', perfectoConfig.keepAliveDuration);
+	
+	setTimeout(cancelKeepAlive, perfectoConfig.keepAliveDuration);
 
 }
 

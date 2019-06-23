@@ -4,7 +4,7 @@ module.exports = function(config) {
 
 const customLaunchers = {
 
-  // We can run multiple browsers
+  // We can run multiple browsers.
 
   chrome72: {
     base: 'Perfecto',
@@ -33,7 +33,7 @@ const customLaunchers = {
 
   config.set({
 
-    // It may take some time to initialize a connection
+    // It may take some time to initialize a connection.
     captureTimeout: 120000,
 
     perfecto: {
@@ -45,24 +45,24 @@ const customLaunchers = {
 		tunnelId: '',
 
 		// The local hostname or host address.
-		// If not set this value is determined automatically..
+		// If not set this value is determined automatically.
 		// OPTIONAL
 		host: '',
 
 		// The full path of perfectoconnect binary.
-		// If not set it is assumed that the binary is in the executable path
+		// If not set it is assumed that the binary is in the executable path.
 		// OPTIONAL
 		perfectoConnect: '',
 
-		// The Perfecto Cloud URL
+		// The Perfecto Cloud URL.
 		// MANDATORY
 		perfectoUrl: '',
 
-		// The security token
+		// The security token.
 		// MANDATORY
 		securityToken: '',
 
-		// the name of the test for the report
+		// the name of the test for the report.
 		// OPTIONAL
 		testName: '',
 
@@ -81,18 +81,23 @@ const customLaunchers = {
 		// OPTIONAL
 		testPerSpec: false,
 
-		// Enable/disable compact logging where only failures are reported
+		// Enable/disable compact logging where only failures are reported.
 		// If not set then false is assumed. This parameter is ignores when
 		// testPerSpec = true.
 		// OPTIONAL
 		compactReport: false,
 
 		// Timeout in msec between keep alives. Only required for long tests
-		// where browsers may remain idel for a long period of time
+		// where browsers may remain idle for a long period of time.
 		// OPTIONAL
 		keepAlive: 0,
 
-		// Place holder for capablities that apply for all browser
+		// Duration in msec after which the keep alive mechanism is stopped regardless
+		// of weather or not the test is finished.
+		// OPTIONAL
+		keepAliveDuration: 0,
+
+		// Place holder for capablities that apply for all browser.
 		// OPTIONAL
 		capabilities: {
 		}
