@@ -93,7 +93,7 @@ const customLaunchers = {
 		keepAlive: 0,
 
 		// Duration in msec after which the keep alive mechanism is stopped regardless
-		// of weather or not the test is finished.
+		// of whether or not the test is finished.
 		// OPTIONAL
 		keepAliveDuration: 0,
 
