@@ -7,8 +7,6 @@ const child_process = require('child_process');
 var perfectoConnect;
 var perfectoDisconnect = false;
 var log;
-var initError = false;
-
 var keepAliveTimer = null;
 
 class DriverData{
@@ -140,6 +138,7 @@ function getSecurityToken(perfectoConfig){
 }
 
 function getTunnelId(perfectoConfig, securityToken, perfectoUrl){
+
 	var tunnelId = process.env.PERFECTO_TUNNEL_ID;
 
 	if (tunnelId){
@@ -222,91 +221,87 @@ function quitDriver(id) {
 
 module.exports.quitDriver = quitDriver;
 
-module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator, logger, config, args) {
+module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator, captureTimeoutLauncherDecorator, retryLauncherDecorator, logger, config, args) {
 
 	baseLauncherDecorator(this);
+	captureTimeoutLauncherDecorator(this);
+	retryLauncherDecorator(this);
 
 	log = logger.create('perfecto-launcher');
 
 	function error(self) {
-		initError = true;
+
 		self._done('failure');
 	}
 
-	if (initError){
-		log.error('Exiting because of previous errors');
-		error(this);
-		return;
-	}
-
-	// perfecto main configuration	
-	perfectoConfig = config.perfecto;
-	if (!perfectoConfig){
-		log.error('Missing perfecto configuration section');
-		error(this);
-		return;
-	}
-
-	// host	
-	const host = getHost(perfectoConfig);
-	if (host == null){
-		log.error('Cannot determine local host');
-		error(this);
-		return;
-	}
-	log.info('Using host [%s]', host);
-
-	// perfecto server url	
-	const perfectoUrl = getPerfectoUrl(perfectoConfig);
-	if (perfectoUrl == null){
-		error(this);
-		return;
-	}
-
-	log.info('Using perfectoUrl [%s]', perfectoUrl);
-
-	// security token	
-	const securityToken = getSecurityToken(perfectoConfig);
-	if (securityToken == null){
-		error(this);
-		return;
-	}
-
-	log.info('Using securityToken [%s]', securityToken);
-
-	// tunnelId;
-	if (tunnelId == null)
-		tunnelId = getTunnelId(perfectoConfig, securityToken, perfectoUrl);
-
-	if (tunnelId == null){
-		error(this);
-		return;
-	}
-	
-	log.info('Using tunnelId [%s]', tunnelId);
-	
-	this.name = 'Perfecto';
-
-	var tunnelIdCap;
-	if (tunnelId == 'none' )
-		tunnelIdCap={};
-	else
-		tunnelIdCap={'tunnelId' : tunnelId};
-
-	var securityTokenCap = {
-		'securityToken' : securityToken,
-	}
-
-	if (!perfectoConfig.capabilities)
-		perfectoConfig.capabilities={};
-
-	var capabilities = Object.assign({}, tunnelIdCap, securityTokenCap, args.capabilities, perfectoConfig.capabilities);
-
-	log.info(capabilities);
-
-	setupKeepAlive(perfectoConfig);
-
 	this.on('start', function(karmaUrl) {
+
+		// perfecto main configuration	
+		perfectoConfig = config.perfecto;
+		if (!perfectoConfig){
+			log.error('Missing perfecto configuration section');
+			error(this);
+			return;
+		}
+
+		// host	
+		const host = getHost(perfectoConfig);
+		if (host == null){
+			log.error('Cannot determine local host');
+			error(this);
+			return;
+		}
+		log.info('Using host [%s]', host);
+
+		// perfecto server url	
+		const perfectoUrl = getPerfectoUrl(perfectoConfig);
+		if (perfectoUrl == null){
+			error(this);
+			return;
+		}
+
+		log.info('Using perfectoUrl [%s]', perfectoUrl);
+
+		// security token	
+		const securityToken = getSecurityToken(perfectoConfig);
+		if (securityToken == null){
+			error(this);
+			return;
+		}
+
+		log.info('Using securityToken [%s]', securityToken);
+
+		// tunnelId;
+		if (tunnelId == null)
+			tunnelId = getTunnelId(perfectoConfig, securityToken, perfectoUrl);
+
+		if (tunnelId == null){
+			error(this);
+			return;
+		}
+		
+		log.info('Using tunnelId [%s]', tunnelId);
+		
+		this.name = 'Perfecto';
+
+		var tunnelIdCap;
+		if (tunnelId == 'none' )
+			tunnelIdCap={};
+		else
+			tunnelIdCap={'tunnelId' : tunnelId};
+
+		var securityTokenCap = {
+			'securityToken' : securityToken,
+		}
+
+		if (!perfectoConfig.capabilities)
+			perfectoConfig.capabilities={};
+
+		var capabilities = Object.assign({}, tunnelIdCap, securityTokenCap, args.capabilities, perfectoConfig.capabilities);
+
+		log.info(capabilities);
+
+		setupKeepAlive(perfectoConfig);
 
 		try{
 			var parsed = url.parse(karmaUrl, true);
@@ -323,10 +318,12 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 
 		}catch (e) {
 			log.error(e);
+			error(this);
 		}
 	});
 
 	this.on('kill', function(done) {
+
 		// If we are not running in single run mode, we always close here.
 		// If we do not have a reporter, we always close here.
 		if (!haveReporter(config) || !config.singleRun){
