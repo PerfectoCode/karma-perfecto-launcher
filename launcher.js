@@ -234,6 +234,9 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 		self._done('failure');
 	}
 
+	this.name = 'Perfecto';
+
+
 	this.on('start', function(karmaUrl) {
 
 		// perfecto main configuration	
@@ -282,8 +285,6 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 		
 		log.info('Using tunnelId [%s]', tunnelId);
 		
-		this.name = 'Perfecto';
-
 		var tunnelIdCap;
 		if (tunnelId == 'none' )
 			tunnelIdCap={};
