@@ -1,6 +1,5 @@
 const webdriver = require('selenium-webdriver');
 const url = require('url');
-const encodeUrl = require('encodeurl');
 const os = require('os');
 const child_process = require('child_process');
 
