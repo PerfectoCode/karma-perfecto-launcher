@@ -8,9 +8,11 @@ var perfectoDisconnect = false;
 var log;
 var keepAliveTimer = null;
 
+
 class DriverData{
 	constructor(){
 		this.driver = null;
+		this.reporterInitialized = false;
 	}
 };
 
@@ -206,16 +208,28 @@ function closeTunnel(){
 	}
 }
 
-function quitDriver(id) {
-	log.info ('Terminating driver %s', id);
+function forceKill() {
+
+	log.warn('Force kill');
+
+	process.exit(-1);
+}
+
+async function quitDriver(id) {
+
+	log.info('quitting driver %s', id);
+
 	try {
 		var driver = getDriverData(id).driver;
 		driverDataMap.delete(id);
-		return driver.quit();
+		await driver.quit();
+		if (!driverDataMap.size)
+			setTimeout(forceKill, 30000).unref();
 	} catch (e) {
 		log.error('Error terminating driver');
 		log.error(e);
 	}
+
 }
 
 module.exports.quitDriver = quitDriver;
@@ -317,25 +331,27 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 			driver.get(karmaUrl).then(getDriverData(this.id).driver = driver);
 
 		}catch (e) {
-			log.error(e);
+			log.error('cannot start driver');
 			error(this);
 		}
 	});
 
-	this.on('kill', function(done) {
+	this.on('kill', async function(done) {
 
 		// If we are not running in single run mode, we always close here.
 		// If we do not have a reporter, we always close here.
-		if (!haveReporter(config) || !config.singleRun){
-			// There is a reporter runnung.The reporter will close it.
-			quitDriver(this.id).then(function(){done()});
-
+		if (!haveReporter(config) || !config.singleRun || !getDriverData(this.id).reporterInitialized){
+			// There is no reporter runnung. We have to close the
+			//quitDriver(this.id).then(function(){done()});
+			await quitDriver(this.id);
+			done();
 
 		}else{
 			// We have a reporter and we are in single run mode. The reporter will do the closing.
 			log.info('Reporter registered. Not quitting driver %s', this.id);
 			done();
 		}
+
 	});
 
 }

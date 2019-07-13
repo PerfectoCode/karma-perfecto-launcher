@@ -32,9 +32,13 @@ var logMap = new Map();
 
 function setupReportingClient(id, logData){
 
-	log.info('Initializing reporter for %s', id);
+	log.info('Initializing reporter for %s.', id);
 
-	const webDriver = getDriverData(id).driver;
+	const driverData = getDriverData(id);
+
+	driverData.reporterInitialized = true;
+
+	const webDriver = driverData.driver;
 
 	var jobDetailMap = {};
 
@@ -157,7 +161,6 @@ async function reportSpecs(browserLog, id, config, reportingClient) {
 }
 
 module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorator, logger, config){
-
 	log = logger.create('perfecto-reporter');
 
 	baseReporterDecorator(this);
@@ -218,8 +221,11 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 		pending.push(complete());
 	}
 
-	this.onExit = function(done) {
-		Promise.all(pending).then(() => {done();});
+	this.onExit = async function(done) {
+		if (pending.length)
+			await Promise.all(pending);
+		done();
+
 	};
 
 	this.specFailure = function(browser, result) {
@@ -231,4 +237,5 @@ module.exports.PerfectoReporter = function perfectoReporting(baseReporterDecorat
 		addResult(browser.id, result, true);
 	}
 }
+
 
