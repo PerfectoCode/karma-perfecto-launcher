@@ -341,8 +341,7 @@ module.exports.PerfectoBrowser = function PerfectoBrowser(baseLauncherDecorator,
 		// If we are not running in single run mode, we always close here.
 		// If we do not have a reporter, we always close here.
 		if (!haveReporter(config) || !config.singleRun || !getDriverData(this.id).reporterInitialized){
-			// There is no reporter runnung. We have to close the
-			//quitDriver(this.id).then(function(){done()});
+			// There is no reporter runnung. We have to close the driver here.
 			await quitDriver(this.id);
 			done();
 
